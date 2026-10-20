@@ -21,10 +21,18 @@
     #tools { position: fixed; top: 8px; right: 12px; display: flex; gap: 8px; }
     #tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
     #tools button:hover { background: var(--hover); }
-    #download-menu { inset: auto; top: 48px; right: 12px; margin: 0; padding: 4px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
-    #download-menu button { display: flex; gap: 16px; justify-content: space-between; width: 100%; padding: 6px 10px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; cursor: pointer; }
-    #download-menu button:hover, #download-menu button:focus-visible { background: var(--hover); }
-    #download-menu kbd { opacity: 0.6; font: inherit; }
+    #tools #diagrams { width: auto; max-width: 220px; padding: 0 6px 0 10px; display: flex; align-items: center; gap: 4px; font: inherit; }
+    #diagram-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .menu { inset: auto; top: 48px; right: 12px; margin: 0; padding: 4px; min-width: 220px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .menu button { display: flex; align-items: center; gap: 16px; justify-content: space-between; width: 100%; padding: 6px 10px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+    .menu button:hover, .menu button:focus-visible { background: var(--hover); }
+    .menu button:disabled { opacity: 0.3; cursor: default; background: none; }
+    .menu kbd { opacity: 0.6; font: inherit; }
+    #diagram-menu [data-act="new"] { justify-content: flex-start; gap: 8px; border-bottom: 1px solid var(--border); border-radius: 4px 4px 0 0; margin-bottom: 4px; }
+    #diagram-menu .row { display: flex; }
+    #diagram-menu .row button { width: auto; padding: 6px; }
+    #diagram-menu .row [data-act="open"] { flex: 1; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+    #diagram-menu .row.current [data-act="open"] { font-weight: 600; }
   </style>
 </head>
 <body>
@@ -32,6 +40,7 @@
   <div id="divider" title="Drag to resize. Double-click to reset."></div>
   <div id="out"><div id="stage"></div><pre id="msg"></pre></div>
   <div id="tools">
+    <button id="diagrams" popovertarget="diagram-menu" title="Diagrams"><span id="diagram-name"></span></button>
     <button id="open" title="Open file" aria-label="Open file"></button>
     <input id="picker" type="file" accept=".mmd,.mermaid,.md,.txt,text/plain" hidden />
     <button id="fit" title="Fit to view (or double-click the preview)" aria-label="Fit to view"></button>
@@ -39,7 +48,11 @@
     <button id="copy" title="Copy as image" aria-label="Copy as image"></button>
     <button id="download" popovertarget="download-menu" title="Download" aria-label="Download"></button>
   </div>
-  <div id="download-menu" popover>
+  <div id="diagram-menu" class="menu" popover>
+    <button data-act="new">New diagram</button>
+    <div id="diagram-list"></div>
+  </div>
+  <div id="download-menu" class="menu" popover>
     <button data-format="png">PNG image</button>
     <button data-format="svg">SVG image</button>
     <button data-format="mmd">Mermaid file (.mmd) <kbd>Ctrl+S</kbd></button>

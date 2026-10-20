@@ -24,7 +24,7 @@ There are no other tests, no linter and no formatter. To check a change, run the
 ## Architecture
 
 - `index.html` holds the layout and all CSS. The theme uses CSS variables switched by `data-theme` on `<html>`.
-- `main.js` does all wiring: Monaco setup, a debounced render (250 ms) through `mermaid.parse` and `mermaid.render`, mapping Mermaid errors to Monaco markers, export, the theme toggle, the resizable split and pan/zoom. State lives in `localStorage` (`diagram`, `theme`, `split`).
+- `main.js` does all wiring: Monaco setup, a debounced render (250 ms) through `mermaid.parse` and `mermaid.render`, mapping Mermaid errors to Monaco markers, export, the theme toggle, the resizable split and pan/zoom. State lives in `localStorage`: `diagrams` (`[{ id, name, text }]`, one Monaco model each), `current`, `theme`, `split`. The old `diagram` key is read once as the first diagram.
   - Error line numbers: Mermaid counts lines after it strips the frontmatter, so `errorLocation` adds the frontmatter line count back.
   - `prepareSvg` replaces Mermaid's `width="100%"` and max-width with the real viewBox size. Pan/zoom and export depend on this.
   - Monaco loads only the base editor worker. There are no language workers.
