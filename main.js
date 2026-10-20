@@ -42,9 +42,28 @@ registerMermaid(monaco);
 registerOneDarkPro(monaco);
 registerCompletions(monaco, packs);
 
+// --- Diagrams --------------------------------------------------------------
+// Several diagrams, each with its own Monaco model so undo history stays per diagram.
+// Saved in localStorage as `diagrams` ([{ id, name, text }]) and `current` (an id).
+// The old single `diagram` key becomes the first diagram.
+let diagrams;
+try { diagrams = JSON.parse(localStorage.getItem('diagrams')); } catch { /* corrupt: start over */ }
+const newId = () => Math.random().toString(36).slice(2); // crypto.randomUUID needs https, preview over LAN may not have it
+if (!diagrams?.length) diagrams = [{ id: newId(), name: 'Diagram 1', text: localStorage.getItem('diagram') ?? DEFAULT }];
+let current = diagrams.find((d) => d.id === localStorage.getItem('current')) ?? diagrams[0];
+const saveDiagrams = () => localStorage.setItem('diagrams', JSON.stringify(diagrams));
+const models = new Map();
+function modelFor(d) {
+  if (!models.has(d.id)) {
+    const model = monaco.editor.createModel(d.text, 'mermaid');
+    model.updateOptions({ tabSize: 4, insertSpaces: true }); // same as the editor options below
+    models.set(d.id, model);
+  }
+  return models.get(d.id);
+}
+
 const editor = monaco.editor.create(document.getElementById('src'), {
-  value: localStorage.getItem('diagram') ?? DEFAULT,
-  language: 'mermaid',
+  model: modelFor(current),
   theme: dark ? 'one-dark-pro' : 'vs',
   automaticLayout: true,
   wordBasedSuggestions: 'off', // only our own suggestions, no random words from the text
@@ -133,7 +152,8 @@ async function render() {
 }
 
 editor.onDidChangeModelContent(() => {
-  localStorage.setItem('diagram', editor.getValue());
+  current.text = editor.getValue();
+  saveDiagrams();
   clearTimeout(timer);
   timer = setTimeout(render, 250);
 });
@@ -176,10 +196,14 @@ const ICONS = {
   sun: 'm3.55 19.09l1.41 1.41l1.8-1.79l-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6s6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71l1.8 1.79l1.41-1.41l-1.79-1.8M20.45 5l-1.41-1.4l-1.8 1.79l1.42 1.42M13 1h-2v3h2M6.76 5.39L4.96 3.6L3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2',
   fit: 'M17 4h3c1.1 0 2 .9 2 2v2h-2V6h-3zM4 8V6h3V4H4c-1.1 0-2 .9-2 2v2zm16 8v2h-3v2h3c1.1 0 2-.9 2-2v-2zM7 18H4v-2H2v2c0 1.1.9 2 2 2h3zm9-8v4H8v-4zm2-2H6v8h12z',
   open: 'M6.1 10L4 18V8h17a2 2 0 0 0-2-2h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h15c.9 0 1.7-.6 1.9-1.5l2.3-8.5zM19 18H6l1.6-6h13z',
+  chevron: 'M7.41 8.58L12 13.17l4.59-4.59L18 10l-6 6l-6-6z',
+  plus: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z',
+  pencil: 'm14.06 9l.94.94L5.92 19H5v-.92zm3.6-6c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z',
+  trash: 'M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3zM7 6h10v13H7zm2 2v9h2V8zm4 0v9h2V8z',
   fail: 'M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8',
 };
-const icon = (name) =>
-  `<svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="${ICONS[name]}"/></svg>`;
+const icon = (name, size = 20) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><path fill="currentColor" d="${ICONS[name]}"/></svg>`;
 
 const copyBtn = document.getElementById('copy');
 const downloadBtn = document.getElementById('download');
@@ -231,14 +255,11 @@ function save(blob, filename) {
 }
 
 // --- Open / save the diagram as a file -------------------------------------
-// The download menu or Ctrl+S saves the text. Open button or dropping a file opens it (Ctrl+Z undoes that).
-let fileName = 'diagram.mmd';
-const saveFile = () => save(new Blob([editor.getValue()], { type: 'text/plain' }), fileName);
+// The download menu or Ctrl+S saves the text, named after the diagram.
+// Open button or dropping a file opens it as a new diagram.
+const saveFile = () => save(new Blob([editor.getValue()], { type: 'text/plain' }), current.name + '.mmd');
 async function openFile(file) {
-  fileName = file.name;
-  fitted = false;
-  editor.executeEdits('open-file', [{ range: editor.getModel().getFullModelRange(), text: await file.text() }]);
-  editor.pushUndoStop();
+  newDiagram(file.name.replace(/\.[^.]+$/, ''), await file.text());
 }
 
 const picker = document.getElementById('picker');
@@ -264,6 +285,80 @@ addEventListener('drop', async (e) => {
   e.stopPropagation();
   openFile(file);
 }, true);
+
+// --- Diagram menu ----------------------------------------------------------
+// Lists the diagrams (see "Diagrams" above): switch, new, rename, delete.
+const diagramsBtn = document.getElementById('diagrams');
+const diagramName = document.getElementById('diagram-name');
+const diagramMenu = document.getElementById('diagram-menu');
+const diagramList = document.getElementById('diagram-list');
+diagramsBtn.insertAdjacentHTML('beforeend', icon('chevron', 16));
+diagramMenu.querySelector('[data-act="new"]').insertAdjacentHTML('afterbegin', icon('plus', 16));
+
+function renderDiagramList() {
+  diagramName.textContent = current.name;
+  diagramList.replaceChildren(...diagrams.map((d) => {
+    const row = document.createElement('div');
+    row.className = d === current ? 'row current' : 'row';
+    row.dataset.id = d.id;
+    row.innerHTML = `<button data-act="open"></button>
+      <button data-act="rename" title="Rename">${icon('pencil', 16)}</button>
+      <button data-act="delete" title="Delete" ${diagrams.length === 1 ? 'disabled' : ''}>${icon('trash', 16)}</button>`;
+    const [open, rename, del] = row.children;
+    open.textContent = d.name;
+    rename.ariaLabel = 'Rename ' + d.name;
+    del.ariaLabel = 'Delete ' + d.name;
+    return row;
+  }));
+}
+
+function switchTo(d) {
+  current = d;
+  localStorage.setItem('current', d.id);
+  editor.setModel(modelFor(d));
+  stage.innerHTML = ''; // don't show the previous diagram (dimmed) if this one has errors
+  fitted = false;
+  render();
+  renderDiagramList();
+}
+
+function newDiagram(name, text = 'flowchart LR\n    A --> B\n') {
+  const d = { id: newId(), name, text };
+  diagrams.push(d);
+  saveDiagrams();
+  switchTo(d);
+}
+
+diagramMenu.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const d = diagrams.find((x) => x.id === btn.closest('.row')?.dataset.id);
+  switch (btn.dataset.act) {
+    case 'new':
+      newDiagram(`Diagram ${diagrams.length + 1}`);
+      diagramMenu.hidePopover();
+      break;
+    case 'open':
+      switchTo(d);
+      diagramMenu.hidePopover();
+      break;
+    case 'rename': {
+      const name = prompt('Diagram name', d.name)?.trim();
+      if (name) { d.name = name; saveDiagrams(); }
+      break;
+    }
+    case 'delete':
+      if (!confirm(`Delete "${d.name}"? This cannot be undone.`)) break;
+      diagrams = diagrams.filter((x) => x !== d);
+      saveDiagrams();
+      if (d === current) switchTo(diagrams[0]); // switch first, the editor must not hold a disposed model
+      models.get(d.id)?.dispose();
+      models.delete(d.id);
+      break;
+  }
+  renderDiagramList();
+});
+renderDiagramList();
 
 // Download menu: PNG (2x scale), SVG or the Mermaid text. The popover attribute opens and closes it.
 const downloadMenu = document.getElementById('download-menu');
