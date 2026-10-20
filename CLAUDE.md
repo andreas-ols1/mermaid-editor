@@ -17,7 +17,9 @@ Package manager is pnpm (pinned in `package.json`).
 - `pnpm build`: production build to `dist/`
 - `pnpm preview`: serve the build
 
-There are no tests, no linter and no formatter. To check a change, run the app in a browser.
+- `pnpm check`: runs `scripts/check-snippets.js`, which expands every autocomplete snippet and checks it with `mermaid.parse()` (in jsdom). Run it after changing snippets or upgrading Mermaid.
+
+There are no other tests, no linter and no formatter. To check a change, run the app in a browser.
 
 ## Architecture
 
@@ -39,4 +41,6 @@ There are no tests, no linter and no formatter. To check a change, run the app i
 
 Module contract: `{ matches: RegExp, provide(ctx) -> items | null, init?(monaco, packs) }`. `charts.js` and `structure.js` export arrays of modules. `util.js` builds `ctx` (`before`, `header`, `item(typed)(label, opts)`, `collect(re)`, `range`) and has helpers (`snips`, `enums`, `openBraceLine`, `expandSnippet`). To add a diagram type, write a module and add it to `MODULES` in `index.js`.
 
-`config-schema.js` was generated from `mermaid/dist/config.type.d.ts` (mermaid 12.2.0). Don't edit it by hand. The generator script is not in the repo; comments mention scripts in `/tmp` that also checked snippets with `mermaid.parse()`. Those scripts are gone too.
+Snippets are checked by `pnpm check`. Modules feed it through `docs()` (charts.js, structure.js: full example diagrams) or `SNIPPETS` plus `VALIDATE` (`prefix`, optional `around: { label: [before, after] }` for snippets that need context, `shapeCases`). A new module needs one of these to be checked.
+
+`config-schema.js` was generated from `mermaid/dist/config.type.d.ts` (mermaid 12.2.0). Don't edit it by hand. The generator script is not in the repo.

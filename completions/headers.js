@@ -1,4 +1,4 @@
-// Diagram headers with starter snippets. Each snippet is checked with mermaid.parse() (see /tmp scripts).
+// Diagram headers with starter snippets. Each snippet is checked with mermaid.parse() (pnpm check).
 // `type` is the word Mermaid uses to detect the diagram.
 export const HEADERS = [
   { label: 'architecture-beta', detail: 'architecture diagram',
@@ -53,6 +53,12 @@ export const HEADERS = [
   { label: 'swimlane-beta', detail: 'swimlane diagram' },
   { label: 'agentflow-beta', detail: 'agent flow' },
   { label: 'cynefin-beta', detail: 'cynefin diagram' },
+  { label: 'railroad-beta', detail: 'railroad (syntax) diagram' },
+  { label: 'railroad-ebnf-beta', detail: 'railroad diagram from EBNF' },
+  { label: 'railroad-abnf-beta', detail: 'railroad diagram from ABNF' },
+  { label: 'railroad-peg-beta', detail: 'railroad diagram from PEG' },
+  { label: 'flowchart-elk', detail: 'flowchart with the ELK layout' },
+  { label: 'graph', detail: 'flowchart (old keyword)' },
   { label: 'info', detail: 'show Mermaid version' },
 ];
 
