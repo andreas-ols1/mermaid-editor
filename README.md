@@ -9,10 +9,11 @@ A browser-based editor for [Mermaid](https://mermaid.js.org/) diagrams. Write on
 - Errors are underlined in the editor
 - Pan and zoom the preview. Double-click to fit it to the view.
 - Copy as image, or download as PNG, SVG or `.mmd` from the download menu
-- Open `.mmd` files with the open button or by dropping them on the page. Ctrl+S saves.
+- Open `.mmd` files (as a new diagram) with the open button or by dropping them on the page. Ctrl+S saves.
 - Light and dark theme
 - Icon packs (`logos`, `mdi`) for architecture diagrams
-- Your diagram, theme and layout are saved in the browser
+- Several diagrams: switch, create, rename and delete them from the menu at the left of the toolbar
+- Your diagrams, theme and layout are saved in the browser
 
 ## Getting started
 
