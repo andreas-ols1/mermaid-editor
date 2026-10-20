@@ -15,6 +15,7 @@
     #out.panning { cursor: grabbing; }
     #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
     #stage.stale { opacity: 0.3; }
+    #stage :is(text, foreignObject) { cursor: pointer; } /* click a label to jump to its line */
     #msg { position: absolute; top: 0; left: 0; margin: 12px; padding: 8px 10px; max-height: 40%; overflow: auto; white-space: pre-wrap; font: 13px monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; user-select: text; cursor: text; }
     #msg:empty { display: none; }
     #tools { position: fixed; top: 8px; right: 12px; display: flex; gap: 8px; }
