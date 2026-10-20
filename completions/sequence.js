@@ -48,7 +48,15 @@ export const SNIPPETS = {
   link: 'link ${1:A}: ${2:Label} @ ${3:https://example.com}',
   links: 'links ${1:A}: {"${2:Label}": "${3:https://example.com}"}',
 };
-export const VALIDATE = { prefix: 'sequenceDiagram\n  participant A\n  participant B\n  participant C\n' };
+export const VALIDATE = {
+  prefix: 'sequenceDiagram\n  participant A\n  participant B\n  participant C\n',
+  // [before, after] for snippets that only parse in context.
+  around: {
+    deactivate: ['sequenceDiagram\n  participant A\n  activate A\n', ''],
+    'create participant': ['sequenceDiagram\n  participant A\n', '\n  A->>C: hi'],
+    'create actor': ['sequenceDiagram\n  participant A\n', '\n  A->>C: hi'],
+  },
+};
 export const EXPORTS_FOR_TESTS = { ARROWS, COMPLETE, ARROW_ALT, PARTICIPANT_TYPES };
 
 function participantsIn(ctx) {

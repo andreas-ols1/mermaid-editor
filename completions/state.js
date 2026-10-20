@@ -21,7 +21,11 @@ export const SNIPPETS = {
   classDef: 'classDef ${1:name} fill:${2:#f96},stroke:${3:#333}',
   class: 'class ${1:A} ${2:name}',
 };
-export const VALIDATE = { prefix: 'stateDiagram-v2\n  [*] --> A\n  A --> B\n' };
+export const VALIDATE = {
+  prefix: 'stateDiagram-v2\n  [*] --> A\n  A --> B\n',
+  // [before, after] for snippets that only parse in context.
+  around: { concurrency: ['stateDiagram-v2\n  state X {\n  [*] --> A\n', '\n  [*] --> B\n  }'] },
+};
 
 function statesIn(ctx) {
   const ids = [];
