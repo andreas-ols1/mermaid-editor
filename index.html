@@ -20,6 +20,10 @@
     #tools { position: fixed; top: 8px; right: 12px; display: flex; gap: 8px; }
     #tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
     #tools button:hover { background: var(--hover); }
+    #download-menu { inset: auto; top: 48px; right: 12px; margin: 0; padding: 4px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    #download-menu button { display: flex; gap: 16px; justify-content: space-between; width: 100%; padding: 6px 10px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; cursor: pointer; }
+    #download-menu button:hover, #download-menu button:focus-visible { background: var(--hover); }
+    #download-menu kbd { opacity: 0.6; font: inherit; }
   </style>
 </head>
 <body>
@@ -28,13 +32,16 @@
   <div id="out"><div id="stage"></div><pre id="msg"></pre></div>
   <div id="tools">
     <button id="open" title="Open file" aria-label="Open file"></button>
-    <button id="save" title="Save file (Ctrl+S)" aria-label="Save file"></button>
     <input id="picker" type="file" accept=".mmd,.mermaid,.md,.txt,text/plain" hidden />
     <button id="fit" title="Fit to view (or double-click the preview)" aria-label="Fit to view"></button>
     <button id="theme"></button>
     <button id="copy" title="Copy as image" aria-label="Copy as image"></button>
-    <button id="download" title="Download PNG" aria-label="Download PNG"></button>
-    <button id="download-svg" title="Download SVG" aria-label="Download SVG"></button>
+    <button id="download" popovertarget="download-menu" title="Download" aria-label="Download"></button>
+  </div>
+  <div id="download-menu" popover>
+    <button data-format="png">PNG image</button>
+    <button data-format="svg">SVG image</button>
+    <button data-format="mmd">Mermaid file (.mmd) <kbd>Ctrl+S</kbd></button>
   </div>
   <script type="module" src="/main.js"></script>
 </body>
