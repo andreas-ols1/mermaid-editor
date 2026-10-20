@@ -14,7 +14,9 @@
     #out { position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
     #out.panning { cursor: grabbing; }
     #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
-    #msg { position: absolute; top: 0; left: 0; margin: 12px; white-space: pre-wrap; font: 13px monospace; }
+    #stage.stale { opacity: 0.3; }
+    #msg { position: absolute; top: 0; left: 0; margin: 12px; padding: 8px 10px; max-height: 40%; overflow: auto; white-space: pre-wrap; font: 13px monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; user-select: text; cursor: text; }
+    #msg:empty { display: none; }
     #tools { position: fixed; top: 8px; right: 12px; display: flex; gap: 8px; }
     #tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
     #tools button:hover { background: var(--hover); }
@@ -25,6 +27,9 @@
   <div id="divider" title="Drag to resize. Double-click to reset."></div>
   <div id="out"><div id="stage"></div><pre id="msg"></pre></div>
   <div id="tools">
+    <button id="open" title="Open file" aria-label="Open file"></button>
+    <button id="save" title="Save file (Ctrl+S)" aria-label="Save file"></button>
+    <input id="picker" type="file" accept=".mmd,.mermaid,.md,.txt,text/plain" hidden />
     <button id="fit" title="Fit to view (or double-click the preview)" aria-label="Fit to view"></button>
     <button id="theme"></button>
     <button id="copy" title="Copy as image" aria-label="Copy as image"></button>

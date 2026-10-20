@@ -9,11 +9,13 @@ export default {
   matches: /^architecture/,
 
   init(monaco, packs) {
-    // Build the icon list once (mdi has thousands of names).
+    // Build the icon list once (mdi has thousands of names). Packs are loaders, so this is async.
     let iconCache;
     const icons = () =>
-      (iconCache ??= Object.entries(packs).flatMap(([pack, data]) =>
-        [...Object.keys(data.icons ?? {}), ...Object.keys(data.aliases ?? {})].map((name) => ({ pack, name: `${pack}:${name}` }))));
+      (iconCache ??= Promise.all(Object.entries(packs).map(async ([pack, load]) => {
+        const data = await load();
+        return [...Object.keys(data.icons ?? {}), ...Object.keys(data.aliases ?? {})].map((name) => ({ pack, name: `${pack}:${name}` }));
+      })).then((lists) => lists.flat()));
 
     const nodesIn = (ctx) => ctx.collect(/^\s*(?:service|junction)\s+([\w-]+)(?:\([^)]*\))?(?:\[([^\]]*)\])?/gm);
     const groupsIn = (ctx) => ctx.collect(/^\s*group\s+([\w-]+)(?:\([^)]*\))?(?:\[([^\]]*)\])?/gm);
@@ -27,10 +29,10 @@ export default {
         // Icon inside the parentheses: service id(<here>)
         if ((m = /^\s*(?:service|group)\s+[\w-]+\(([\w:-]*)$/.exec(before))) {
           const mk = ctx.item(m[1]);
-          return [
+          return icons().then((list) => [
             ...BUILTIN_ICONS.map((name) => mk(name, { kind: Kind.Value, detail: 'built-in icon', sort: '0' + name })),
-            ...icons().map(({ pack, name }) => mk(name, { kind: Kind.Value, detail: `${pack} icon`, sort: '1' + name })),
-          ];
+            ...list.map(({ pack, name }) => mk(name, { kind: Kind.Value, detail: `${pack} icon`, sort: '1' + name })),
+          ]);
         }
 
         // Parent group after "in": service id(icon)[Label] in <here>
