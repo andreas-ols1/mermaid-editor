@@ -1,0 +1,3 @@
+minimumReleaseAgeExclude:
+  - '@iconify-json/logos@1.2.17'
+  - mermaid@12.2.0
