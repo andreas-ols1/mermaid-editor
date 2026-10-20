@@ -367,27 +367,67 @@ out.addEventListener('wheel', (e) => {
   zoomAt(e.clientX - rect.left, e.clientY - rect.top, Math.exp(-e.deltaY * speed));
 }, { passive: false });
 
+// A click without dragging jumps to the source line of the clicked label (see jumpToSource).
+// The target is kept from pointerdown, because pointer capture retargets later events to #out.
 let drag = null;
 out.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || msg.contains(e.target)) return; // let the error text be selected
   out.setPointerCapture(e.pointerId);
   out.classList.add('panning');
-  drag = { x: e.clientX, y: e.clientY };
+  drag = { x: e.clientX, y: e.clientY, startX: e.clientX, startY: e.clientY, target: e.target };
 });
 out.addEventListener('pointermove', (e) => {
   if (!drag) return;
   view.x += e.clientX - drag.x;
   view.y += e.clientY - drag.y;
-  drag = { x: e.clientX, y: e.clientY };
+  drag.x = e.clientX;
+  drag.y = e.clientY;
   applyView();
 });
 const endPan = (e) => {
   if (out.hasPointerCapture(e.pointerId)) out.releasePointerCapture(e.pointerId);
   out.classList.remove('panning');
+  if (e.type === 'pointerup' && drag && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 4) {
+    jumpToSource(drag.target);
+  }
   drag = null;
 };
 out.addEventListener('pointerup', endPan);
 out.addEventListener('pointercancel', endPan);
+
+// --- Click a label to jump to its source line ------------------------------
+// Mermaid's SVG ids differ per diagram type, so this matches the label text instead:
+// the first line of text in the clicked shape, searched for in the source (comments skipped).
+function labelAt(el) {
+  const svg = stage.querySelector('svg');
+  for (; el && el !== svg && stage.contains(el); el = el.parentElement) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT,
+      (n) => (n.data.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP));
+    const text = walker.nextNode()?.data.trim();
+    if (text) return text;
+  }
+  return null;
+}
+
+function jumpToSource(el) {
+  const label = labelAt(el);
+  if (!label) return;
+  const model = editor.getModel();
+  const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Whole-word match first (so "A" does not hit "API"), then any match.
+  for (const re of [new RegExp(`(?<!\\w)${esc}(?!\\w)`), new RegExp(esc)]) {
+    for (let line = 1; line <= model.getLineCount(); line++) {
+      const text = model.getLineContent(line);
+      const m = /^\s*%%/.test(text) ? null : re.exec(text);
+      if (!m) continue;
+      const range = new monaco.Range(line, m.index + 1, line, m.index + 1 + m[0].length);
+      editor.setSelection(range);
+      editor.revealRangeInCenterIfOutsideViewport(range);
+      editor.focus();
+      return;
+    }
+  }
+}
 
 out.addEventListener('dblclick', fit);
 document.getElementById('fit').addEventListener('click', fit);
