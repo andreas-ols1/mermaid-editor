@@ -19,7 +19,7 @@ export function registerCompletions(monaco, packs) {
 
   monaco.languages.registerCompletionItemProvider('mermaid', {
     triggerCharacters: ['(', ':', ' ', '-', '>', '<', '[', '{', '|', '"', '.', '/', ',', '@', '%', '=', '+', ','],
-    provideCompletionItems(model, pos) {
+    async provideCompletionItems(model, pos) {
       const ctx = makeCtx(monaco, model, pos);
       const { Kind, before } = ctx;
       const done = (suggestions) => ({ suggestions });
@@ -43,7 +43,7 @@ export function registerCompletions(monaco, packs) {
 
       // 3. Diagram-specific module
       const mod = mods.find((m) => m.matches.test(ctx.header.type));
-      const items = mod?.provide(ctx) ?? [];
+      const items = (await mod?.provide(ctx)) ?? []; // provide may return a Promise (architecture icons)
 
       // 4. Directive and comment starters on an empty line
       if (/^\s*(%|%%\{?\w*)?$/.test(before) && /^\s*%/.test(before)) {
