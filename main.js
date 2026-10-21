@@ -52,6 +52,8 @@ const newId = () => Math.random().toString(36).slice(2); // crypto.randomUUID ne
 if (!diagrams?.length) diagrams = [{ id: newId(), name: 'Diagram 1', text: localStorage.getItem('diagram') ?? DEFAULT }];
 let current = diagrams.find((d) => d.id === localStorage.getItem('current')) ?? diagrams[0];
 const saveDiagrams = () => localStorage.setItem('diagrams', JSON.stringify(diagrams));
+// Another tab saved its list: reload, so this tab's older copy never overwrites it.
+addEventListener('storage', (e) => { if (e.key === 'diagrams') location.reload(); });
 const models = new Map();
 function modelFor(d) {
   if (!models.has(d.id)) {
