@@ -6,6 +6,7 @@ import { registerOneDarkPro } from './one-dark-pro.js';
 import { registerCompletions } from './completions/index.js';
 import { HEADERS } from './completions/headers.js';
 import { expandSnippet } from './completions/util.js';
+import { loadDiagrams, newId } from './diagrams.js';
 // Register icon packs here. Autocomplete uses the same list.
 // Each pack is a loader that fetches the (large) JSON on first use, then reuses it.
 const once = (f) => { let p; return () => (p ??= f()); };
@@ -46,13 +47,8 @@ registerCompletions(monaco, packs);
 
 // --- Diagrams --------------------------------------------------------------
 // Several diagrams, each with its own Monaco model so undo history stays per diagram.
-// Saved in localStorage as `diagrams` ([{ id, name, text }]) and `current` (an id).
-// The old single `diagram` key becomes the first diagram.
-let diagrams;
-try { diagrams = JSON.parse(localStorage.getItem('diagrams')); } catch { /* corrupt: start over */ }
-const newId = () => Math.random().toString(36).slice(2); // crypto.randomUUID needs https, preview over LAN may not have it
-if (!diagrams?.length) diagrams = [{ id: newId(), name: 'Diagram 1', text: localStorage.getItem('diagram') ?? DEFAULT }];
-let current = diagrams.find((d) => d.id === localStorage.getItem('current')) ?? diagrams[0];
+// Loading (and the old `diagram` key) lives in diagrams.js, which `pnpm check` tests.
+let { diagrams, current } = loadDiagrams(localStorage, DEFAULT);
 const saveDiagrams = () => localStorage.setItem('diagrams', JSON.stringify(diagrams));
 // Another tab saved its list: reload, so this tab's older copy never overwrites it.
 addEventListener('storage', (e) => { if (e.key === 'diagrams') location.reload(); });
