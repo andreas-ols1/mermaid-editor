@@ -28,7 +28,8 @@
     .menu button:hover, .menu button:focus-visible { background: var(--hover); }
     .menu button:disabled { opacity: 0.3; cursor: default; background: none; }
     .menu kbd { opacity: 0.6; font: inherit; }
-    #diagram-menu [data-act="new"] { justify-content: flex-start; gap: 8px; border-bottom: 1px solid var(--border); border-radius: 4px 4px 0 0; margin-bottom: 4px; }
+    #diagram-menu [data-act="new"] { justify-content: flex-start; gap: 8px; }
+    #template { display: block; width: 100%; margin: 2px 0 4px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: inherit; font: inherit; cursor: pointer; }
     #diagram-menu .row { display: flex; }
     #diagram-menu .row button { width: auto; padding: 6px; }
     #diagram-menu .row [data-act="open"] { flex: 1; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
@@ -50,6 +51,7 @@
   </div>
   <div id="diagram-menu" class="menu" popover>
     <button data-act="new">New diagram</button>
+    <select id="template" aria-label="New diagram from a template"><option value="" disabled selected>New from template…</option></select>
     <div id="diagram-list"></div>
   </div>
   <div id="download-menu" class="menu" popover>
