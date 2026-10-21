@@ -282,9 +282,11 @@ addEventListener('dragover', (e) => {
 addEventListener('drop', async (e) => {
   const file = e.dataTransfer.files[0];
   if (!file) return;
-  e.preventDefault();
+  e.preventDefault(); // also for other files, or the browser navigates away to show them
   e.stopPropagation();
-  openFile(file);
+  // Only the file types the open button accepts (its accept list), so a dropped image is ignored.
+  const ok = picker.accept.split(',').some((a) => (a.startsWith('.') ? file.name.toLowerCase().endsWith(a) : file.type === a));
+  if (ok) openFile(file);
 }, true);
 
 // --- Diagram menu ----------------------------------------------------------
