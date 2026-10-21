@@ -471,6 +471,7 @@ function zoomAt(cx, cy, factor) {
 }
 
 out.addEventListener('wheel', (e) => {
+  if (msg.contains(e.target)) return; // scroll a long error message instead of zooming
   e.preventDefault();
   const rect = out.getBoundingClientRect();
   const speed = e.ctrlKey ? 0.01 : 0.0015; // ctrlKey is set by trackpad pinch
