@@ -330,6 +330,7 @@ function renderDiagramList() {
 }
 
 function switchTo(d) {
+  if (d === current) return; // keep the preview and zoom when clicking the open diagram
   current = d;
   localStorage.setItem('current', d.id);
   editor.setModel(modelFor(d));
