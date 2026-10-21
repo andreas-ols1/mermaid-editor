@@ -4,6 +4,8 @@ import editorWorker from 'monaco-editor/editor/editor.worker?worker';
 import { registerMermaid } from './mermaid-language.js';
 import { registerOneDarkPro } from './one-dark-pro.js';
 import { registerCompletions } from './completions/index.js';
+import { HEADERS } from './completions/headers.js';
+import { expandSnippet } from './completions/util.js';
 // Register icon packs here. Autocomplete uses the same list.
 // Each pack is a loader that fetches the (large) JSON on first use, then reuses it.
 const once = (f) => { let p; return () => (p ??= f()); };
@@ -296,6 +298,19 @@ const diagramMenu = document.getElementById('diagram-menu');
 const diagramList = document.getElementById('diagram-list');
 diagramsBtn.insertAdjacentHTML('beforeend', icon('chevron', 16));
 diagramMenu.querySelector('[data-act="new"]').insertAdjacentHTML('afterbegin', icon('plus', 16));
+
+// Templates are the starter snippets that header autocomplete uses (checked by `pnpm check`).
+const templates = HEADERS.filter((h) => h.snippet);
+const templatePicker = document.getElementById('template');
+templatePicker.append(...templates.map((h, i) => {
+  const name = h.detail.replace(/\s*\(.*\)/, ''); // "flowchart (LR, TD, RL, BT)" -> "flowchart"
+  return new Option(name[0].toUpperCase() + name.slice(1), i);
+}));
+templatePicker.addEventListener('change', () => {
+  newDiagram(templatePicker.selectedOptions[0].text, expandSnippet(templates[templatePicker.value].snippet));
+  templatePicker.selectedIndex = 0; // back to "New from template…"
+  diagramMenu.hidePopover();
+});
 
 function renderDiagramList() {
   diagramName.textContent = current.name;

@@ -12,7 +12,7 @@ A browser-based editor for [Mermaid](https://mermaid.js.org/) diagrams. Write on
 - Open `.mmd` files (as a new diagram) with the open button or by dropping them on the page. Ctrl+S saves.
 - Light and dark theme
 - Icon packs (`logos`, `mdi`) for architecture diagrams
-- Several diagrams: switch, create, rename and delete them from the menu at the left of the toolbar
+- Several diagrams: switch, create (blank or from a template), rename and delete them from the menu at the left of the toolbar
 - Your diagrams, theme and layout are saved in the browser
 
 ## Getting started
