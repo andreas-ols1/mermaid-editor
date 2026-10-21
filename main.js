@@ -164,10 +164,11 @@ editor.onDidChangeModelContent(() => {
 render();
 
 // --- Copy / download -------------------------------------------------------
-// Copy puts a PNG image on the clipboard. Download saves an SVG file.
+// Copy puts a PNG image on the clipboard. The download menu saves PNG, SVG or .mmd.
 function getSvg() {
   const svg = out.querySelector('svg');
-  if (!svg) return null;
+  // A stale preview is the last good diagram, not what the text says now: export nothing.
+  if (!svg || stage.classList.contains('stale')) return null;
   const { width, height } = svg.viewBox.baseVal;
   const clone = svg.cloneNode(true);
   clone.removeAttribute('style');
@@ -389,8 +390,8 @@ downloadMenu.addEventListener('click', async (e) => {
       saveFile();
     } else {
       const data = getSvg();
-      if (!data) throw new Error('No diagram to export');
-      save(format === 'png' ? await svgToPng(data) : new Blob([data.xml], { type: 'image/svg+xml' }), 'diagram.' + format);
+      if (!data) throw new Error('No up-to-date diagram to export');
+      save(format === 'png' ? await svgToPng(data) : new Blob([data.xml], { type: 'image/svg+xml' }), `${current.name}.${format}`);
     }
     flash(downloadBtn, 'download', true);
   } catch (err) {
