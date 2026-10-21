@@ -105,7 +105,6 @@ export const SNIPPETS = {
   animate: '${1:e1}@{ animate: true }',
 };
 export const VALIDATE = { prefix: 'flowchart LR\n  A --> B\n  A --> C\n', shapeCases: SHAPE_NAMES.map(([n]) => `flowchart LR\n  A@{ shape: ${n}, label: "x" }`) };
-export const EXPORTS_FOR_TESTS = { ARROWS, LABELED_ARROWS, SHAPES, SHAPE_NAMES, ARROW_TOKEN };
 
 export default {
   matches: /^(flowchart|graph)/,

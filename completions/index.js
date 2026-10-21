@@ -18,7 +18,7 @@ export function registerCompletions(monaco, packs) {
   const mods = MODULES.map((m) => (m.init ? m.init(monaco, packs) ?? m : m));
 
   monaco.languages.registerCompletionItemProvider('mermaid', {
-    triggerCharacters: ['(', ':', ' ', '-', '>', '<', '[', '{', '|', '"', '.', '/', ',', '@', '%', '=', '+', ','],
+    triggerCharacters: ['(', ':', ' ', '-', '>', '<', '[', '{', '|', '"', '.', '/', ',', '@', '%', '=', '+'],
     async provideCompletionItems(model, pos) {
       const ctx = makeCtx(monaco, model, pos);
       const { Kind, before } = ctx;
