@@ -42,7 +42,6 @@ export const MEMBER_SNIPPETS = {
   annotation: '<<${1|interface,abstract,service,enumeration|}>>',
 };
 export const VALIDATE = { prefix: 'classDiagram\n  class A\n  class B\n' };
-export const EXPORTS_FOR_TESTS = { RELATIONS, REL_ALT, ANNOTATIONS };
 
 function classesIn(ctx) {
   const ids = [];

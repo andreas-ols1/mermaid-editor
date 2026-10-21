@@ -23,7 +23,6 @@ export const SNIPPETS = {
   class: 'class ${1:A} ${2:name}',
 };
 export const VALIDATE = { prefix: 'erDiagram\n  A ||--o{ B : has\n' };
-export const EXPORTS_FOR_TESTS = { TYPES, KEYS };
 
 const OP_ALT = '[|o}][|o{}](?:--|\\.\\.)[|o{}][|o{}]';
 

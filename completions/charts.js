@@ -218,7 +218,7 @@ const kanban = {
     const { before } = ctx;
     let m;
     if ((m = /@\{[^}]*\bpriority:\s*'?([\w ]*)$/.exec(before))) return enums(ctx, m[1], ['Very High', 'High', 'Low', 'Very Low']);
-    if ((m = /@\{\s*(?:[^}]*,\s*)?(\w*)$/.exec(before))) return enums(ctx, m[1], [['ticket', 'ticket id'], ['assigned', 'owner'], ['priority', 'Very High, High, Low or Very Low']].map(([k, d]) => [k, d]), { suffix: ': ' });
+    if ((m = /@\{\s*(?:[^}]*,\s*)?(\w*)$/.exec(before))) return enums(ctx, m[1], [['ticket', 'ticket id'], ['assigned', 'owner'], ['priority', 'Very High, High, Low or Very Low']], { suffix: ': ' });
     if ((m = /^\s*([\w-]*)$/.exec(before))) return snips(ctx, m[1], KANBAN);
     return [];
   },

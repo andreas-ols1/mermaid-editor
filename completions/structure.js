@@ -83,7 +83,7 @@ const BLOCK = [
 ];
 const block = {
   matches: /^block/,
-  docs: () => Object.fromEntries(BLOCK.map(([l, s]) => [`block ${l}`, `block-beta\n  columns 3\n  a b c\n  ${l === 'class' ? 'classDef name fill:#f96\n  ' : ''}${ex(s)}${l === 'arrow block' ? '' : ''}`])),
+  docs: () => Object.fromEntries(BLOCK.map(([l, s]) => [`block ${l}`, `block-beta\n  columns 3\n  a b c\n  ${l === 'class' ? 'classDef name fill:#f96\n  ' : ''}${ex(s)}`])),
   provide(ctx) {
     const { before } = ctx;
     let m;
@@ -131,7 +131,6 @@ const requirement = {
 };
 
 // ---------- C4 ----------
-const q = (s) => `"\${${s}}"`;
 const C4_ELEMENTS = [
   ['Person', 'Person(${1:alias}, "${2:Label}", "${3:Description}")'], ['Person_Ext', 'Person_Ext(${1:alias}, "${2:Label}", "${3:Description}")'],
   ['System', 'System(${1:alias}, "${2:Label}", "${3:Description}")'], ['System_Ext', 'System_Ext(${1:alias}, "${2:Label}", "${3:Description}")'],
@@ -154,7 +153,7 @@ const C4_ELEMENTS = [
 const c4Aliases = (ctx) => ctx.collect(/^\s*(?!Rel|BiRel|Update|title)\w+\(\s*(\w+)\s*[,)]/gm).map((a) => a.id);
 const c4 = {
   matches: /^C4/,
-  docs: () => Object.fromEntries(C4_ELEMENTS.map(([l, s]) => [`c4 ${l}`, `C4Context\n  Person(a, "A")\n  System(b, "B")\n  ${ex(s)}\n  ${l.startsWith('Update') && l !== 'UpdateLayoutConfig' ? '' : ''}`.replace(/^$/, ''), ])
+  docs: () => Object.fromEntries(C4_ELEMENTS.map(([l, s]) => [`c4 ${l}`, `C4Context\n  Person(a, "A")\n  System(b, "B")\n  ${ex(s)}`])
     .map(([n, t]) => [n, n === 'c4 RelIndex' ? t.replace('C4Context', 'C4Dynamic') : t])),
   provide(ctx) {
     const { before, Kind } = ctx;

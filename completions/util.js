@@ -32,7 +32,6 @@ export function makeCtx(monaco, model, pos) {
 
   const ctx = {
     monaco, model, pos, before, text, header, Kind, range,
-    // Lines of the diagram body, without the header line.
     isHeaderLine: pos.lineNumber === header.line,
     // item(typed)(label, options) -> completion item
     item: (typed = '') => (label, o = {}) => ({
@@ -65,9 +64,6 @@ export function expandSnippet(s) {
     .replace(/\$\d+/g, '')
     .replace(/\\(.)/g, '$1'); // unescape \\ \| \, \$ \}
 }
-
-// Sort helper: keeps the order of an array.
-export const order = (list, x) => String(list.indexOf(x)).padStart(3, '0');
 
 // Unique values by key.
 export const uniq = (arr, key = (x) => x) => {

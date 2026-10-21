@@ -57,7 +57,6 @@ export const VALIDATE = {
     'create actor': ['sequenceDiagram\n  participant A\n', '\n  A->>C: hi'],
   },
 };
-export const EXPORTS_FOR_TESTS = { ARROWS, COMPLETE, ARROW_ALT, PARTICIPANT_TYPES };
 
 function participantsIn(ctx) {
   const out = [];
