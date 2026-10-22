@@ -6,7 +6,7 @@
   <style>
     :root { --bg: #fff; --fg: #1f2328; --border: #ccc; --hover: #f3f3f3; color-scheme: light; }
     :root[data-theme="dark"] { --bg: #282c34; --fg: #abb2bf; --border: #181a1f; --hover: #2c313c; color-scheme: dark; }
-    body { margin: 0; display: grid; grid-template-columns: var(--left, 50%) 6px minmax(0, 1fr); height: 100vh; font-family: sans-serif; background: var(--bg); color: var(--fg); }
+    body { margin: 0; display: grid; grid-template-columns: var(--left, 50%) 6px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 100vh; font-family: sans-serif; background: var(--bg); color: var(--fg); }
     #src { min-width: 0; }
     #divider { background: var(--border); cursor: col-resize; touch-action: none; transition: background 0.15s; }
     #divider:hover, #divider.dragging { background: #528bff; }
@@ -18,12 +18,12 @@
     #stage :is(text, foreignObject) { cursor: pointer; } /* click a label to jump to its line */
     #msg { position: absolute; top: 0; left: 0; margin: 12px; padding: 8px 10px; max-height: 40%; overflow: auto; white-space: pre-wrap; font: 13px monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; user-select: text; cursor: text; }
     #msg:empty { display: none; }
-    #tools { position: fixed; top: 8px; right: 12px; display: flex; gap: 8px; }
+    #tools { position: fixed; top: 8px; right: calc(12px + var(--chat-w, 0px)); display: flex; gap: 8px; }
     #tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
     #tools button:hover { background: var(--hover); }
     #tools #diagrams { width: auto; max-width: 220px; padding: 0 6px 0 10px; display: flex; align-items: center; gap: 4px; font: inherit; }
     #diagram-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .menu { inset: auto; top: 48px; right: 12px; margin: 0; padding: 4px; min-width: 220px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .menu { inset: auto; top: 48px; right: calc(12px + var(--chat-w, 0px)); margin: 0; padding: 4px; min-width: 220px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
     .menu button { display: flex; align-items: center; gap: 16px; justify-content: space-between; width: 100%; padding: 6px 10px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
     .menu button:hover, .menu button:focus-visible { background: var(--hover); }
     .menu button:disabled { opacity: 0.3; cursor: default; background: none; }
@@ -34,6 +34,38 @@
     #diagram-menu .row button { width: auto; padding: 6px; }
     #diagram-menu .row [data-act="open"] { flex: 1; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
     #diagram-menu .row.current [data-act="open"] { font-weight: 600; }
+    /* Optional AI chat (only shown when AI is configured, see ai/config.js) */
+    body.chat-open { --chat-w: 340px; grid-template-columns: min(var(--left, 50%), calc(100% - 560px)) 6px minmax(0, 1fr) var(--chat-w); }
+    #chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border); font-size: 14px; }
+    #chat[hidden] { display: none; }
+    #chat header { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--border); }
+    #chat header strong { flex: 1; }
+    .btn { padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; cursor: pointer; }
+    .btn:hover { background: var(--hover); }
+    .btn:disabled { opacity: 0.4; cursor: default; background: var(--bg); }
+    .btn.primary { background: var(--fg); border-color: var(--fg); color: var(--bg); } /* near-black on light, inverted on dark */
+    .btn.primary:hover { background: var(--fg); opacity: 0.85; }
+    .btn kbd { opacity: 0.7; font: inherit; font-size: 12px; margin-left: 4px; }
+    #chat-close { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; }
+    #chat-notice { margin: 0; padding: 10px 12px 0; font-size: 13px; opacity: 0.7; }
+    #chat-notice[hidden] { display: none; }
+    .link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+    #chat-log { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    #chat-log .entry { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.4; }
+    #chat-log .user { align-self: flex-end; max-width: 85%; padding: 6px 10px; border-radius: 8px; background: var(--hover); }
+    #chat-log .info { opacity: 0.6; font-size: 13px; }
+    #chat-log .error { color: #e45649; font-size: 13px; }
+    :root[data-theme="dark"] #chat-log .error { color: #e06c75; }
+    #chat-form { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 12px; border-top: 1px solid var(--border); }
+    #chat-input { resize: vertical; min-height: 56px; max-height: 40vh; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+    #chat-form .row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    #chat-status { flex: 1; opacity: 0.6; font-size: 13px; }
+    #review { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgb(0 0 0 / 0.4); }
+    #review[hidden] { display: none; }
+    #review .box { display: flex; flex-direction: column; width: min(1200px, 92vw); height: 80vh; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow: hidden; }
+    #review header { display: grid; grid-template-columns: 1fr 1fr; padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 600; } /* one label over each half of the diff */
+    #review-diff { flex: 1; min-height: 0; }
+    #review footer { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--border); }
   </style>
 </head>
 <body>
@@ -48,6 +80,35 @@
     <button id="theme"></button>
     <button id="copy" title="Copy as image" aria-label="Copy as image"></button>
     <button id="download" popovertarget="download-menu" title="Download" aria-label="Download"></button>
+    <button id="ai" title="AI chat" aria-label="AI chat" hidden></button>
+  </div>
+  <aside id="chat" hidden>
+    <header>
+      <strong>AI</strong>
+      <button id="ai-sign" class="btn"></button>
+      <button id="chat-close" class="btn" title="Close" aria-label="Close AI chat"></button>
+    </header>
+    <p id="chat-notice" hidden>The diagram text is sent to the configured AI endpoint. <button class="link">Got it</button></p>
+    <div id="chat-log"></div>
+    <form id="chat-form">
+      <textarea id="chat-input" rows="3" placeholder="Describe a diagram or a change. Enter sends, Shift+Enter adds a line."></textarea>
+      <div class="row">
+        <span id="chat-status"></span>
+        <button id="chat-stop" class="btn" type="button" hidden>Stop</button>
+        <button id="chat-send" class="btn primary" type="submit">Send</button>
+      </div>
+    </form>
+  </aside>
+  <div id="review" hidden>
+    <div class="box" role="dialog" aria-label="Review AI suggestion">
+      <header><span>Current</span><span>Suggestion</span></header>
+      <div id="review-diff"></div>
+      <footer>
+        <button class="btn" data-act="reject">Reject <kbd>Esc</kbd></button>
+        <button class="btn" data-act="new">Open as new diagram</button>
+        <button class="btn primary" data-act="accept">Accept <kbd>Ctrl+Enter</kbd></button>
+      </footer>
+    </div>
   </div>
   <div id="diagram-menu" class="menu" popover>
     <button data-act="new">New diagram</button>

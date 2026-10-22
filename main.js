@@ -7,6 +7,7 @@ import { registerCompletions } from './completions/index.js';
 import { HEADERS } from './completions/headers.js';
 import { expandSnippet } from './completions/util.js';
 import { loadDiagrams, newId } from './diagrams.js';
+import { aiEnabled } from './ai/config.js';
 // Register icon packs here. Autocomplete uses the same list.
 // Each pack is a loader that fetches the (large) JSON on first use, then reuses it.
 const once = (f) => { let p; return () => (p ??= f()); };
@@ -123,6 +124,7 @@ function clearMarkers() {
 let n = 0;
 let timer;
 let fitted = false;
+let lastError = null; // { text, message, line } of the last failed render, for the AI chat
 async function render() {
   const ticket = ++n;
   const id = 'g' + ticket;
@@ -134,6 +136,7 @@ async function render() {
     const { svg } = await mermaid.render(id, text);
     if (stale()) return;
     msg.textContent = '';
+    lastError = null;
     clearMarkers();
     stage.innerHTML = svg;
     stage.classList.remove('stale');
@@ -143,6 +146,7 @@ async function render() {
     if (stale()) return;
     stage.classList.add('stale'); // keep the last good diagram, dimmed, while the text has errors
     msg.textContent = e.message;
+    lastError = { text, message: e.message, line: errorLocation(e, text)?.line };
     showMarker(e, text);
   } finally {
     // Mermaid can leave a temp container (or an error "bomb" icon) in <body>.
@@ -201,6 +205,8 @@ const ICONS = {
   plus: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z',
   pencil: 'm14.06 9l.94.94L5.92 19H5v-.92zm3.6-6c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z',
   trash: 'M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3zM7 6h10v13H7zm2 2v9h2V8zm4 0v9h2V8z',
+  sparkle: 'M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z',
+  close: 'M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z',
   fail: 'M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8',
 };
 const icon = (name, size = 20) =>
@@ -544,3 +550,141 @@ function jumpToSource(el) {
 
 out.addEventListener('dblclick', fit);
 document.getElementById('fit').addEventListener('click', fit);
+
+// --- AI chat (optional) ----------------------------------------------------
+// Only when AI is configured by env (ai/config.js). Otherwise the button and panel stay hidden
+// and no AI code is loaded. Each suggestion is checked with mermaid.parse (ai/chat.js), shown as
+// a diff (ai/review.js), and applied only on Accept, as one undo step.
+if (aiEnabled) initAi();
+
+async function initAi() {
+  const [auth, { ask }, { review }] = await Promise.all([import('./ai/auth.js'), import('./ai/chat.js'), import('./ai/review.js')]);
+  const aiBtn = document.getElementById('ai');
+  const chat = document.getElementById('chat');
+  const log = document.getElementById('chat-log');
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send');
+  const stopBtn = document.getElementById('chat-stop');
+  const status = document.getElementById('chat-status');
+  const signBtn = document.getElementById('ai-sign');
+  const notice = document.getElementById('chat-notice');
+
+  aiBtn.innerHTML = icon('sparkle');
+  document.getElementById('chat-close').innerHTML = icon('close', 16);
+  aiBtn.hidden = false;
+
+  const setOpen = (open) => {
+    chat.hidden = !open;
+    document.body.classList.toggle('chat-open', open);
+    localStorage.setItem('chat', open ? '1' : '0');
+    if (open) input.focus();
+  };
+  aiBtn.addEventListener('click', () => setOpen(chat.hidden));
+  document.getElementById('chat-close').addEventListener('click', () => setOpen(false));
+  setOpen(localStorage.getItem('chat') === '1');
+
+  // One-time notice: what leaves the browser.
+  notice.hidden = localStorage.getItem('ai-notice') === '1';
+  notice.querySelector('button').addEventListener('click', () => {
+    localStorage.setItem('ai-notice', '1');
+    notice.hidden = true;
+  });
+
+  const showAuth = () => (signBtn.textContent = auth.isSignedIn() ? 'Sign out' : 'Sign in');
+  auth.onAuthChange(showAuth);
+  showAuth();
+  signBtn.addEventListener('click', () => {
+    if (auth.isSignedIn()) return auth.signOut();
+    auth.signIn().catch((e) => entry('error', e.message));
+  });
+
+  // Model output is untrusted: it only ever goes into textContent.
+  function entry(kind, text) {
+    const el = document.createElement('div');
+    el.className = 'entry ' + kind;
+    el.textContent = text;
+    log.append(el);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // Short memory: the last 2 rounds, per diagram model. The current text is sent every turn anyway.
+  const histories = new WeakMap();
+  const remember = (model, ...messages) => histories.set(model, [...(histories.get(model) ?? []), ...messages].slice(-4));
+
+  let controller = null;
+  const setBusy = (busy, text = '', stoppable = busy) => {
+    sendBtn.disabled = busy;
+    stopBtn.hidden = !stoppable;
+    status.textContent = text;
+  };
+  stopBtn.addEventListener('click', () => controller?.abort());
+
+  async function send(request) {
+    const model = editor.getModel();
+    const version = model.getAlternativeVersionId();
+    const text = model.getValue();
+    entry('user', request);
+    controller = new AbortController();
+    setBusy(true, 'Thinking…');
+    try {
+      // Before any await: the sign-in popup needs the click or key press that got us here.
+      if (!auth.isSignedIn()) {
+        setBusy(true, 'Signing in…');
+        await auth.signIn({ signal: controller.signal });
+        setBusy(true, 'Thinking…');
+      }
+      const error = lastError?.text === text ? lastError : null;
+      const { reply, candidate } = await ask({ request, text, error, history: histories.get(model) ?? [], signal: controller.signal });
+      remember(model, { role: 'user', content: request }, { role: 'assistant', content: (reply + (candidate ? '\n(Suggested a new version of the diagram.)' : '')).trim() });
+      if (reply) entry('ai', reply);
+      if (!candidate) return;
+      if (candidate.trim() === text.trim()) return entry('info', 'The suggestion is the same as the current text.');
+      setBusy(true, 'Review the suggestion', false);
+      const font = { fontFamily: editor.getOption(monaco.editor.EditorOption.fontFamily), fontSize: editor.getOption(monaco.editor.EditorOption.fontSize) };
+      const choice = await review({ original: text, modified: candidate, font });
+      if (choice === 'new') {
+        newDiagram(current.name + ' (AI)', candidate);
+        entry('info', 'Opened as a new diagram.');
+      } else if (choice === 'accept') {
+        if (editor.getModel() !== model || model.getAlternativeVersionId() !== version) {
+          return entry('error', 'The text changed while the AI was working, so the suggestion was not applied.');
+        }
+        // One undo step for the whole change.
+        editor.pushUndoStop();
+        editor.executeEdits('ai', [{ range: model.getFullModelRange(), text: candidate }]);
+        editor.pushUndoStop();
+        entry('info', 'Applied. Ctrl+Z undoes it.');
+      } else {
+        entry('info', 'Rejected.');
+      }
+    } catch (e) {
+      entry(e.name === 'AbortError' ? 'info' : 'error', e.name === 'AbortError' ? 'Stopped.' : e.message);
+    } finally {
+      controller = null;
+      setBusy(false);
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const request = input.value.trim();
+    if (!request || controller) return;
+    input.value = '';
+    send(request);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      form.requestSubmit();
+    } else if (e.key === 'Escape') {
+      controller?.abort();
+    }
+  });
+
+  editor.addAction({
+    id: 'ai-chat',
+    label: 'AI: Open chat',
+    run: () => setOpen(true),
+  });
+}
