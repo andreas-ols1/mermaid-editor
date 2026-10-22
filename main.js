@@ -450,9 +450,11 @@ function prepareSvg() {
   svg.setAttribute('height', height);
 }
 
+let viewIsFit = false; // true until the user zooms or pans after a fit
 function fit() {
   const svg = stage.querySelector('svg');
   if (!svg) return;
+  viewIsFit = true;
   const pad = 24;
   const w = Number(svg.getAttribute('width'));
   const h = Number(svg.getAttribute('height'));
@@ -463,12 +465,27 @@ function fit() {
   applyView();
 }
 
+// When the preview changes size (the divider, the window, a side panel): fit again if the view
+// is still fitted, otherwise keep the point at its centre, so the diagram does not slide out of view.
+let outSize = { w: out.clientWidth, h: out.clientHeight };
+new ResizeObserver(() => {
+  const w = out.clientWidth;
+  const h = out.clientHeight;
+  if (w === outSize.w && h === outSize.h) return;
+  view.x += (w - outSize.w) / 2;
+  view.y += (h - outSize.h) / 2;
+  outSize = { w, h };
+  if (viewIsFit) fit();
+  else applyView();
+}).observe(out);
+
 function zoomAt(cx, cy, factor) {
   const k = Math.min(K_MAX, Math.max(K_MIN, view.k * factor));
   const ratio = k / view.k;
   view.x = cx - (cx - view.x) * ratio;
   view.y = cy - (cy - view.y) * ratio;
   view.k = k;
+  viewIsFit = false;
   applyView();
 }
 
@@ -495,6 +512,7 @@ out.addEventListener('pointermove', (e) => {
   view.y += e.clientY - drag.y;
   drag.x = e.clientX;
   drag.y = e.clientY;
+  if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) >= 4) viewIsFit = false; // a click is not a pan
   applyView();
 });
 const endPan = (e) => {
