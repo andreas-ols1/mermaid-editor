@@ -37,6 +37,7 @@ const DEFAULT = `architecture-beta
 const out = document.getElementById('out');
 const stage = document.getElementById('stage');
 const msg = document.getElementById('msg');
+const renderTmp = document.getElementById('render-tmp');
 
 // Monaco needs a worker. Only the base editor worker is used (no language workers).
 self.MonacoEnvironment = { getWorker: () => new editorWorker() };
@@ -131,7 +132,7 @@ async function render() {
   const stale = () => ticket !== n || text !== editor.getValue();
   try {
     await mermaid.parse(text);
-    const { svg } = await mermaid.render(id, text);
+    const { svg } = await mermaid.render(id, text, renderTmp);
     if (stale()) return;
     msg.textContent = '';
     clearMarkers();
@@ -145,7 +146,7 @@ async function render() {
     msg.textContent = e.message;
     showMarker(e, text);
   } finally {
-    // Mermaid can leave a temp container (or an error "bomb" icon) in <body>.
+    // Mermaid can leave a temp container (or an error "bomb" icon) in #render-tmp.
     // Do not remove #id itself: after a good render it is the SVG in #out.
     document.getElementById('d' + id)?.remove();
   }
