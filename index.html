@@ -13,7 +13,7 @@
     body.dragging { user-select: none; cursor: col-resize; }
     #out { position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
     #out.panning { cursor: grabbing; }
-    #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+    #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; } /* no will-change: it would rasterize once and show pixels when zoomed in */
     #stage.stale { opacity: 0.3; }
     #stage :is(text, foreignObject) { cursor: pointer; } /* click a label to jump to its line */
     /* The toolbar floats over the top 50px of the preview (fit() keeps that band free too) */
