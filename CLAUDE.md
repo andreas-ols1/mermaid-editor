@@ -28,6 +28,7 @@ There are no other tests, no linter and no formatter. To check a change, run the
   - Error line numbers: Mermaid counts lines after it strips the frontmatter, so `errorLocation` adds the frontmatter line count back.
   - `prepareSvg` replaces Mermaid's `width="100%"` and max-width with the real viewBox size. Pan/zoom and export depend on this.
   - Monaco loads only the base editor worker. There are no language workers.
+  - The code font is JetBrains Mono, bundled with `@fontsource/jetbrains-mono` (400 and 400 italic), used by the editor. `remeasureFonts()` runs once it has loaded.
 - `mermaid-language.js` is the Monarch tokenizer and language config. `one-dark-pro.js` is the dark Monaco theme.
 - Icon packs are registered once in `main.js` (`packs`). The same object goes to both Mermaid and autocomplete (architecture icon suggestions).
 
