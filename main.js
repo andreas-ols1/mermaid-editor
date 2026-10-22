@@ -297,6 +297,10 @@ const diagramName = document.getElementById('diagram-name');
 const diagramMenu = document.getElementById('diagram-menu');
 const diagramList = document.getElementById('diagram-list');
 diagramsBtn.insertAdjacentHTML('beforeend', icon('chevron', 16));
+// Open under the button. The button's width follows the diagram name, so this can't be fixed CSS.
+diagramMenu.addEventListener('beforetoggle', (e) => {
+  if (e.newState === 'open') diagramMenu.style.inset = `48px auto auto ${diagramsBtn.getBoundingClientRect().left}px`;
+});
 diagramMenu.querySelector('[data-act="new"]').insertAdjacentHTML('afterbegin', icon('plus', 16));
 
 // Templates are the starter snippets that header autocomplete uses (checked by `pnpm check`).
