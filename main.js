@@ -419,32 +419,35 @@ downloadMenu.addEventListener('click', async (e) => {
 
 // --- Resizable split -------------------------------------------------------
 // Drag the divider to change the editor width. Double-click resets to 50%.
-const divider = document.getElementById('divider');
+// makeDivider is also used for the AI chat panel's divider.
+function makeDivider(el, onDrag, onReset) {
+  el.addEventListener('pointerdown', (e) => {
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+    document.body.classList.add('dragging');
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (el.hasPointerCapture(e.pointerId)) onDrag(e.clientX);
+  });
+  const stop = (e) => {
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    el.classList.remove('dragging');
+    document.body.classList.remove('dragging');
+  };
+  el.addEventListener('pointerup', stop);
+  el.addEventListener('pointercancel', stop);
+  el.addEventListener('dblclick', onReset);
+}
+
 const MIN = 15; // percent
 const MAX = 85;
 const setLeft = (pct) => document.body.style.setProperty('--left', pct + '%');
-
 setLeft(Number(localStorage.getItem('split')) || 50);
-
-divider.addEventListener('pointerdown', (e) => {
-  divider.setPointerCapture(e.pointerId);
-  divider.classList.add('dragging');
-  document.body.classList.add('dragging');
-});
-divider.addEventListener('pointermove', (e) => {
-  if (!divider.hasPointerCapture(e.pointerId)) return;
-  const pct = Math.min(MAX, Math.max(MIN, (e.clientX / window.innerWidth) * 100));
+makeDivider(document.getElementById('divider'), (x) => {
+  const pct = Math.min(MAX, Math.max(MIN, (x / window.innerWidth) * 100));
   setLeft(pct);
   localStorage.setItem('split', pct);
-});
-const stopDrag = (e) => {
-  if (divider.hasPointerCapture(e.pointerId)) divider.releasePointerCapture(e.pointerId);
-  divider.classList.remove('dragging');
-  document.body.classList.remove('dragging');
-};
-divider.addEventListener('pointerup', stopDrag);
-divider.addEventListener('pointercancel', stopDrag);
-divider.addEventListener('dblclick', () => {
+}, () => {
   setLeft(50);
   localStorage.setItem('split', 50);
 });
@@ -606,8 +609,9 @@ async function initAi() {
   document.getElementById('chat-close').innerHTML = icon('close', 16);
   aiBtn.hidden = false;
 
+  const chatDivider = document.getElementById('chat-divider');
   const setOpen = (open) => {
-    chat.hidden = !open;
+    chat.hidden = chatDivider.hidden = !open;
     document.body.classList.toggle('chat-open', open);
     localStorage.setItem('chat', open ? '1' : '0');
     if (open) input.focus();
@@ -615,6 +619,18 @@ async function initAi() {
   aiBtn.addEventListener('click', () => setOpen(chat.hidden));
   document.getElementById('chat-close').addEventListener('click', () => setOpen(false));
   setOpen(localStorage.getItem('chat') === '1');
+
+  // Drag the chat divider to change the panel width (280 px up to 60% of the window). Double-click resets it.
+  const setChatWidth = (px) => document.body.style.setProperty('--chat-width', px + 'px');
+  if (localStorage.getItem('chat-width')) setChatWidth(Number(localStorage.getItem('chat-width')));
+  makeDivider(chatDivider, (x) => {
+    const px = Math.round(Math.min(window.innerWidth * 0.6, Math.max(280, window.innerWidth - x - 3)));
+    setChatWidth(px);
+    localStorage.setItem('chat-width', px);
+  }, () => {
+    document.body.style.removeProperty('--chat-width');
+    localStorage.removeItem('chat-width');
+  });
 
   // One-time notice: what leaves the browser.
   notice.hidden = localStorage.getItem('ai-notice') === '1';

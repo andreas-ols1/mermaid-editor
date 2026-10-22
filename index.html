@@ -45,8 +45,12 @@
     #diagram-menu .row [data-act="open"] { flex: 1; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
     #diagram-menu .row.current [data-act="open"] { font-weight: 600; }
     /* Optional AI chat (only shown when AI is configured, see ai/config.js) */
-    body.chat-open { --chat-w: 340px; grid-template-columns: min(var(--left, 50%), calc(100% - 560px)) 6px minmax(0, 1fr) var(--chat-w); }
-    #chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border); font-size: 14px; }
+    /* --chat-width is set by dragging #chat-divider. --chat-w (panel + divider) moves the toolbar and menus. The preview keeps 380px, the toolbar width. */
+    body.chat-open { --chat-w: calc(var(--chat-width, 340px) + 6px); grid-template-columns: min(var(--left, 50%), calc(100% - var(--chat-w) - 386px)) 6px minmax(0, 1fr) 6px var(--chat-width, 340px); }
+    #chat-divider { background: var(--border); cursor: col-resize; touch-action: none; transition: background 0.15s; } /* same as #divider */
+    #chat-divider:hover, #chat-divider.dragging { background: var(--accent, #528bff); }
+    #chat-divider[hidden] { display: none; }
+    #chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; font-size: 14px; }
     #chat[hidden] { display: none; }
     #chat header { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--border); }
     #chat header strong { flex: 1; }
@@ -93,6 +97,7 @@
     <button id="download" popovertarget="download-menu" title="Download" aria-label="Download"></button>
     <button id="ai" title="AI chat" aria-label="AI chat" hidden></button>
   </div>
+  <div id="chat-divider" title="Drag to resize. Double-click to reset." hidden></div>
   <aside id="chat" hidden>
     <header>
       <strong>AI</strong>
