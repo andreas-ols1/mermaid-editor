@@ -23,7 +23,7 @@ There are no other tests, no linter and no formatter. To check a change, run the
 
 ## Architecture
 
-- `index.html` holds the layout and all CSS. The theme uses CSS variables switched by `data-theme` on `<html>`.
+- `index.html` holds the layout and all CSS. The theme uses CSS variables switched by `data-theme` on `<html>`. Colours are semantic tokens in `:root` for both themes (`--control-*` for buttons and inputs, `--primary-*` for the one main action, `--danger`, `--accent` for dividers and focus, `--muted`); use them instead of hex values. Text tokens reach 4.5:1, control borders 3:1.
 - `main.js` does all wiring: Monaco setup, a debounced render (250 ms) through `mermaid.parse` and `mermaid.render`, mapping Mermaid errors to Monaco markers, export, the theme toggle, the resizable split and pan/zoom. State lives in `localStorage`: `diagrams` (`[{ id, name, text }]`, one Monaco model each), `current`, `theme`, `split`. Loading lives in `diagrams.js` (no DOM, tested): the old `diagram` key becomes the first diagram, and a list that can't be read is copied to `diagrams-broken` before it can be overwritten.
   - Error line numbers: Mermaid counts lines after it strips the frontmatter, so `errorLocation` adds the frontmatter line count back.
   - `prepareSvg` replaces Mermaid's `width="100%"` and max-width with the real viewBox size. Pan/zoom and export depend on this.

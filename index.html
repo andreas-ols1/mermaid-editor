@@ -4,12 +4,17 @@
   <meta charset="utf-8" />
   <title>Mermaid editor</title>
   <style>
-    :root { --bg: #fff; --fg: #1f2328; --border: #ccc; --hover: #f3f3f3; color-scheme: light; }
-    :root[data-theme="dark"] { --bg: #282c34; --fg: #abb2bf; --border: #181a1f; --hover: #2c313c; color-scheme: dark; }
+    /* Semantic colours: controls (buttons, inputs), the one primary action, danger, accent (dividers, focus), muted text */
+    :root { --bg: #fff; --fg: #1f2328; --border: #ccc; --hover: #f3f3f3; color-scheme: light;
+      --control-bg: #f6f8fa; --control-border: #8c959f; --control-hover: #eaeef2;
+      --primary-bg: #0969da; --primary-fg: #fff; --danger: #cf222e; --accent: #528bff; --muted: #59636e; }
+    :root[data-theme="dark"] { --bg: #282c34; --fg: #abb2bf; --border: #181a1f; --hover: #2c313c; color-scheme: dark;
+      --control-bg: #323842; --control-border: #737d8f; --control-hover: #3b4250;
+      --primary-bg: #61afef; --primary-fg: #1e2127; --danger: #e8838b; --accent: #528bff; --muted: #9da5b4; }
     body { margin: 0; display: grid; grid-template-columns: var(--left, 50%) 6px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 100vh; font-family: sans-serif; background: var(--bg); color: var(--fg); }
     #src { min-width: 0; }
     #divider { background: var(--border); cursor: col-resize; touch-action: none; transition: background 0.15s; }
-    #divider:hover, #divider.dragging { background: #528bff; }
+    #divider:hover, #divider.dragging { background: var(--accent); }
     body.dragging { user-select: none; cursor: col-resize; }
     #out { position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
     #out.panning { cursor: grabbing; }
@@ -20,8 +25,10 @@
     #msg { position: absolute; top: 0; left: 0; margin: 50px 12px 12px; padding: 8px 10px; max-height: 40%; overflow: auto; white-space: pre-wrap; font: 13px monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; user-select: text; cursor: text; }
     #msg:empty { display: none; }
     #tools { position: fixed; top: 8px; right: calc(12px + var(--chat-w, 0px)); display: flex; gap: 8px; }
-    #tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
-    #tools button:hover { background: var(--hover); }
+    #tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; cursor: pointer; border: 1px solid var(--control-border); border-radius: 6px; background: var(--control-bg); color: var(--fg); }
+    #tools button:hover { background: var(--control-hover); }
+    body.chat-open #ai { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); } /* the chat is on */
+    button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     #tools #diagrams { width: auto; max-width: 220px; padding: 0 6px 0 10px; display: flex; align-items: center; gap: 4px; font: inherit; }
     #diagram-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .menu { inset: auto; top: 48px; right: calc(12px + var(--chat-w, 0px)); margin: 0; padding: 4px; min-width: 220px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
@@ -32,7 +39,7 @@
     #diagram-menu [data-act="new"] { justify-content: flex-start; gap: 8px; }
     /* Mermaid renders in a temporary element here. Out of the body grid, or it adds a row while it renders */
     #render-tmp { position: absolute; top: 0; left: -10000px; }
-    #template { display: block; width: 100%; margin: 2px 0 4px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: inherit; font: inherit; cursor: pointer; }
+    #template { display: block; width: 100%; margin: 2px 0 4px; padding: 5px 6px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--bg); color: inherit; font: inherit; cursor: pointer; }
     #diagram-menu .row { display: flex; }
     #diagram-menu .row button { width: auto; padding: 6px; }
     #diagram-menu .row [data-act="open"] { flex: 1; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
@@ -43,26 +50,26 @@
     #chat[hidden] { display: none; }
     #chat header { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--border); }
     #chat header strong { flex: 1; }
-    .btn { padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; cursor: pointer; }
-    .btn:hover { background: var(--hover); }
-    .btn:disabled { opacity: 0.4; cursor: default; background: var(--bg); }
-    .btn.primary { background: var(--fg); border-color: var(--fg); color: var(--bg); } /* near-black on light, inverted on dark */
-    .btn.primary:hover { background: var(--fg); opacity: 0.85; }
+    .btn { padding: 5px 10px; border: 1px solid var(--control-border); border-radius: 6px; background: var(--control-bg); color: var(--fg); font: inherit; cursor: pointer; }
+    .btn:hover { background: var(--control-hover); }
+    .btn:disabled { opacity: 0.4; cursor: default; background: var(--control-bg); }
+    .btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); }
+    .btn.primary:hover { background: var(--primary-bg); opacity: 0.9; }
     .btn kbd { opacity: 0.7; font: inherit; font-size: 12px; margin-left: 4px; }
+    #chat-stop { color: var(--danger); border-color: var(--danger); }
     #chat-close { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; }
-    #chat-notice { margin: 0; padding: 10px 12px 0; font-size: 13px; opacity: 0.7; }
+    #chat-notice { margin: 0; padding: 10px 12px 0; font-size: 13px; color: var(--muted); }
     #chat-notice[hidden] { display: none; }
     .link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
     #chat-log { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
     #chat-log .entry { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.4; }
     #chat-log .user { align-self: flex-end; max-width: 85%; padding: 6px 10px; border-radius: 8px; background: var(--hover); }
-    #chat-log .info { opacity: 0.6; font-size: 13px; }
-    #chat-log .error { color: #e45649; font-size: 13px; }
-    :root[data-theme="dark"] #chat-log .error { color: #e06c75; }
+    #chat-log .info { color: var(--muted); font-size: 13px; }
+    #chat-log .error { color: var(--danger); font-size: 13px; }
     #chat-form { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 12px; border-top: 1px solid var(--border); }
-    #chat-input { resize: vertical; min-height: 56px; max-height: 40vh; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+    #chat-input { resize: vertical; min-height: 56px; max-height: 40vh; padding: 6px 8px; border: 1px solid var(--control-border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
     #chat-form .row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
-    #chat-status { flex: 1; opacity: 0.6; font-size: 13px; }
+    #chat-status { flex: 1; color: var(--muted); font-size: 13px; }
     #review { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgb(0 0 0 / 0.4); }
     #review[hidden] { display: none; }
     #review .box { display: flex; flex-direction: column; width: min(1200px, 92vw); height: 80vh; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow: hidden; }
