@@ -29,6 +29,8 @@
     .menu button:disabled { opacity: 0.3; cursor: default; background: none; }
     .menu kbd { opacity: 0.6; font: inherit; }
     #diagram-menu [data-act="new"] { justify-content: flex-start; gap: 8px; }
+    /* Mermaid renders in a temporary element here. Out of the body grid, or it adds a row while it renders */
+    #render-tmp { position: absolute; top: 0; left: -10000px; }
     #template { display: block; width: 100%; margin: 2px 0 4px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: inherit; font: inherit; cursor: pointer; }
     #diagram-menu .row { display: flex; }
     #diagram-menu .row button { width: auto; padding: 6px; }
@@ -40,6 +42,7 @@
   <div id="src"></div>
   <div id="divider" title="Drag to resize. Double-click to reset."></div>
   <div id="out"><div id="stage"></div><pre id="msg"></pre></div>
+  <div id="render-tmp" aria-hidden="true"></div>
   <div id="tools">
     <button id="diagrams" popovertarget="diagram-menu" title="Diagrams"><span id="diagram-name"></span></button>
     <button id="open" title="Open file" aria-label="Open file"></button>
