@@ -1,5 +1,7 @@
 import mermaid from 'mermaid';
 import * as monaco from 'monaco-editor';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/400-italic.css'; // comments are italic in the dark theme
 import editorWorker from 'monaco-editor/editor/editor.worker?worker';
 import { registerMermaid } from './mermaid-language.js';
 import { registerOneDarkPro } from './one-dark-pro.js';
@@ -70,6 +72,7 @@ const editor = monaco.editor.create(document.getElementById('src'), {
   wordBasedSuggestions: 'off', // only our own suggestions, no random words from the text
   quickSuggestions: { other: true, comments: true, strings: true }, // the tokenizer marks YAML values as strings
   minimap: { enabled: false },
+  fontFamily: "'JetBrains Mono', monospace", // bundled (@fontsource)
   fontSize: 14,
   tabSize: 4,
   insertSpaces: true,
@@ -78,6 +81,11 @@ const editor = monaco.editor.create(document.getElementById('src'), {
   renderLineHighlight: 'line',
   padding: { top: 12, bottom: 12 },
 });
+
+// Monaco measures the font when it starts. If JetBrains Mono loads later, measure again,
+// or the cursor and selections are drawn at the fallback font's widths.
+Promise.all(['14px "JetBrains Mono"', 'italic 14px "JetBrains Mono"'].map((f) => document.fonts.load(f)))
+  .then(() => monaco.editor.remeasureFonts());
 
 // --- Error markers ---------------------------------------------------------
 // Mermaid errors name a line (and often a column). Show a red squiggle there.
