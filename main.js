@@ -435,6 +435,7 @@ divider.addEventListener('dblclick', () => {
 const view = { x: 0, y: 0, k: 1 };
 const K_MIN = 0.1;
 const K_MAX = 8;
+const TOOLBAR = 50; // the fixed toolbar covers the top of the preview (see #msg in index.html)
 
 function applyView() {
   stage.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.k})`;
@@ -456,10 +457,10 @@ function fit() {
   const pad = 24;
   const w = Number(svg.getAttribute('width'));
   const h = Number(svg.getAttribute('height'));
-  const k = Math.min((out.clientWidth - pad * 2) / w, (out.clientHeight - pad * 2) / h, 1);
+  const k = Math.min((out.clientWidth - pad * 2) / w, (out.clientHeight - TOOLBAR - pad) / h, 1);
   view.k = Math.max(K_MIN, k);
   view.x = (out.clientWidth - w * view.k) / 2;
-  view.y = (out.clientHeight - h * view.k) / 2;
+  view.y = TOOLBAR + (out.clientHeight - TOOLBAR - pad - h * view.k) / 2;
   applyView();
 }
 
