@@ -13,7 +13,7 @@
     body.dragging { user-select: none; cursor: col-resize; }
     #out { position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
     #out.panning { cursor: grabbing; }
-    #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+    #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; } /* no will-change: it would rasterize once and show pixels when zoomed in */
     #stage.stale { opacity: 0.3; }
     #stage :is(text, foreignObject) { cursor: pointer; } /* click a label to jump to its line */
     #msg { position: absolute; top: 0; left: 0; margin: 12px; padding: 8px 10px; max-height: 40%; overflow: auto; white-space: pre-wrap; font: 13px monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; user-select: text; cursor: text; }
