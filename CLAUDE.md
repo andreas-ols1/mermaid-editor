@@ -46,3 +46,18 @@ Module contract: `{ matches: RegExp, provide(ctx) -> items | null, init?(monaco,
 Snippets are checked by `pnpm check`. Modules feed it through `docs()` (charts.js, structure.js: full example diagrams) or `SNIPPETS` plus `VALIDATE` (`prefix`, optional `around: { label: [before, after] }` for snippets that need context, `shapeCases`). A new module needs one of these to be checked.
 
 `config-schema.js` was generated from `mermaid/dist/config.type.d.ts` (mermaid 12.2.0). Don't edit it by hand. The generator script is not in the repo.
+
+### Optional AI chat (`ai/`)
+
+Off unless configured. Env (see `.env.example`; real values only in `.env.local`, which is ignored): `AI_TARGET` (proxy target, not exposed to the browser), `VITE_AI_ISSUER`, `VITE_AI_CLIENT_ID`, `VITE_AI_SCOPE`, `VITE_AI_MODEL`, `VITE_AI_FORMAT` (`openai` or `anthropic`). There are no defaults in code. Tracked files must not contain real endpoint, client or model values, or company names: `pnpm check` enforces this.
+
+`vite.config.js` exists only for the optional AI features. Without `AI_TARGET` it returns `{}`. With it, `pnpm dev` and `pnpm preview` proxy `/ai/v1/*` to `AI_TARGET` (the API sends no CORS headers), serve `callback.html` at `/callback` (the OAuth redirect path must match exactly), add `callback.html` to the build, and define `import.meta.env.AI_PROXY`. A static build has no proxy, so no AI.
+
+Layers (features never know the provider):
+- `config.js`: reads env. `aiEnabled` is false unless the proxy and all values are present. `main.js` loads the other `ai/` modules with dynamic `import()` only when it is true.
+- `auth.js`: OAuth authorization code + PKCE (S256), public client. Endpoints from RFC 8414 discovery. Sign-in in a popup; `callback.html` posts `{ code, state }` back (opener `postMessage` and a `BroadcastChannel`, same origin only), and `state` is checked. The token endpoint is called directly (it allows CORS). Tokens in `sessionStorage`, refreshed 60 s before expiry and once after a 401; a failed refresh signs out. Never log tokens.
+- `provider.js`: `complete({ system, messages, signal })` to `/ai/v1/chat/completions` (openai) or `/ai/v1/messages` (anthropic), `max_tokens` 4096, no streaming. Errors carry `status`.
+- `prompts.js`, `chat.js`: one chat turn. The current text (and its Mermaid error, if any) is sent every turn, with the last 4 messages as history. The first ```mermaid block is checked with `mermaid.parse`; if it fails, the error goes back to the model (at most 2 repair rounds).
+- `review.js`: diff overlay (`createDiffEditor`, temporary models, the main editor's font). Accept applies the change in `main.js` as one undo step (`pushUndoStop` / `executeEdits` / `pushUndoStop`), but not if the text changed since the request. "Open as new diagram" creates a new diagram instead.
+
+Model output is untrusted: only `textContent` and Monaco models, never `innerHTML`. Keep Mermaid's default `securityLevel`. Extra `localStorage` keys: `chat` (panel open), `ai-notice` (the one-time notice was dismissed).
