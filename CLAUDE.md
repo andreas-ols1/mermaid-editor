@@ -17,7 +17,7 @@ Package manager is pnpm (pinned in `package.json`).
 - `pnpm build`: production build to `dist/`
 - `pnpm preview`: serve the build
 
-- `pnpm check`: runs `scripts/check-snippets.js`, which expands every autocomplete snippet and checks it with `mermaid.parse()` (in jsdom), and `scripts/check-diagrams.js`, which tests diagram loading (`diagrams.js`). Run it after changing snippets, diagram storage or upgrading Mermaid.
+- `pnpm check`: runs `scripts/check-env-leak.js` (fails if a value from `.env.local` appears in a file git tracks or would add), `scripts/check-snippets.js`, which expands every autocomplete snippet and checks it with `mermaid.parse()` (in jsdom), and `scripts/check-diagrams.js`, which tests diagram loading (`diagrams.js`). Run it after changing snippets, diagram storage or upgrading Mermaid, and before committing.
 
 There are no other tests, no linter and no formatter. To check a change, run the app in a browser.
 

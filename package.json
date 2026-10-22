@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "node scripts/check-snippets.js && node scripts/check-diagrams.js"
+    "check": "node scripts/check-env-leak.js && node scripts/check-snippets.js && node scripts/check-diagrams.js"
   },
   "keywords": [],
   "author": "",
